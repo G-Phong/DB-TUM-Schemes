@@ -1,0 +1,71 @@
+with recursive fahrplan_rec as (
+	select von, nach, abfahrt, ankunft
+	from fahrplan
+	
+	union all -- nicht duplikat-eleminierend
+	
+	select fr.von, f.nach, fr.abfahrt, f.ankunft
+	from fahrplan_rec fr, fahrplan f -- f = Rekursionanfang; fr = Rekursionsschritt
+	where fr.nach = f.von
+	and fr.ankunft <= f.abfahrt
+	and fr.von != f.nach
+)
+
+select * from fahrplan_rec
+
+
+
+
+_____________________________________
+
+
+
+with recursive fahrplan_rec as (
+	select von, nach, linie as aktuelle_linie, abfahrt, ankunft,
+	(ankunft - abfahrt) as Fahrtzeit,
+	INTERVAL '00:00:00' as Wartezeit,
+	0 as Umstiege
+	from fahrplan
+	--where abfahrt between TIME '09:00:00' and TIME '10:00:00'
+	
+	union all -- nicht duplikat-eleminierend
+	
+	select vonn.von, hin.nach, hin.linie, vonn.abfahrt, hin.ankunft,
+	vonn.fahrtzeit  + (hin.ankunft - hin.abfahrt), 
+	-- (5min von Garching -> F.) +  (2min von F. -> Uni)
+	vonn.wartezeit + (hin.abfahrt - vonn.ankunft),
+	vonn.Umstiege + case when hin.linie != vonn.aktuelle_linie or hin.abfahrt > vonn.ankunft then 1 else 0 end
+	-- vonn.abfahrt = 09:04:00 (Garching); vonn.ankunft = 09:09:00 (F.); hin.abfahrt = 17:55:00; hin.ankunft = 17:57:00
+	from fahrplan_rec vonn, fahrplan hin -- f = Rekursionanfang; fr = Rekursionsschritt
+	where vonn.nach = hin.von
+	and vonn.ankunft <= hin.abfahrt
+	and vonn.von != hin.nach
+	--and vonn.von = 'Fröttmaning'
+	--and hin.nach = 'Garching, Forschungszentrum'
+	--and hin.ankunft <= TIME '10:30:00'
+),
+
+unnötigeSicht as (select rec.von, rec.nach, rec.abfahrt, rec.ankunft, rec.aktuelle_linie, rec.fahrtzeit, rec.wartezeit, fahrtzeit+wartezeit as reisezeit,
+				  rec.Umstiege
+				from fahrplan_rec rec
+				  --where rec.von = 'Fröttmaning'
+				  --and rec.nach = 'Garching, Forschungszentrum'
+				  --and rec.ankunft <= TIME '10:30:00'
+				
+				 )
+
+select *
+from unnötigeSicht fr
+where fr.von = 'Fröttmaning'
+and fr.nach = 'Garching, Forschungszentrum'
+and fr.ankunft <= TIME '10:30:00'
+and not exists (
+	select *
+	from unnötigeSicht fr2
+	where fr2.von = fr.von
+	and fr2.nach = fr.nach
+	and fr2.ankunft <= TIME '10:30:00'
+	and fr2.abfahrt > fr.abfahrt
+	and fr2.reisezeit < fr.reisezeit
+	and fr2.umstiege < fr.umstiege
+)

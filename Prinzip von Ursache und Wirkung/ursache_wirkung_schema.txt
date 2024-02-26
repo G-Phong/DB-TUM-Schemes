@@ -1,0 +1,47 @@
+DROP TABLE IF EXISTS folgt;
+DROP TABLE IF EXISTS ereignisse;
+
+
+
+CREATE TABLE ereignisse
+       (ID_erg         INTEGER PRIMARY KEY,
+        Bez            VARCHAR(50) NOT NULL);
+
+CREATE TABLE folgt
+       (UrsacheID      INTEGER REFERENCES ereignisse ON DELETE CASCADE,
+        WirkungID      INTEGER REFERENCES ereignisse,
+		PRIMARY KEY	   (WirkungID));
+
+
+INSERT INTO ereignisse(ID_erg, Bez) 
+VALUES (0, 'Big Bang');
+
+INSERT INTO ereignisse(ID_erg, Bez) 
+VALUES (1, 'Beginn der Zeit'); 
+		
+INSERT INTO ereignisse(ID_erg, Bez) 
+VALUES (10, 'Fahrzeugpanne'); 
+ 
+INSERT INTO ereignisse(ID_erg, Bez) 
+VALUES (11, 'Stau auf der A99'); 
+		
+INSERT INTO ereignisse(ID_erg, Bez) 
+VALUES (12, 'Student verpasst Vorlesung'); 
+
+INSERT INTO ereignisse(ID_erg, Bez) 
+VALUES (13, 'Telekom-Techniker verspätet sich mit DSL-Anschluss'); 
+		
+INSERT INTO folgt(UrsacheID, WirkungID) 
+VALUES (0,1); 
+
+INSERT INTO folgt(UrsacheID, WirkungID) 
+VALUES (10,11);
+
+INSERT INTO folgt(UrsacheID, WirkungID) 
+VALUES (11,12); 
+
+INSERT INTO folgt(UrsacheID, WirkungID) 
+VALUES (11,13); 
+		
+		
+		

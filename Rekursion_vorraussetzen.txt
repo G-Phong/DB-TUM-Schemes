@@ -1,0 +1,25 @@
+WITH recursive x as (
+  select vor.Vorgaenger, vor.Nachfolger, 1 as zaehler 
+  --Initialisierung: zaehler wird auf 1 gesetzt, da wir ja am Anfang einen Vorgänger haben
+  from voraussetzen vor
+  -- Am Rekursionsanfang ist unsere Ergebnistabelle "x" identisch mit der "voraussetzen"-Tabelle 
+  
+  union
+  
+  select v1.Vorgaenger, v2.nachfolger, v1.zaehler + 1
+  --Rekursionsschritt: Nach jedem Schritt wird der zaehler um eins inkrementiert
+  from x v1, voraussetzen v2
+  where v1.Nachfolger = v2.Vorgaenger 
+  -- Gehe jedes Element/VL aus der Ergebnistabelle "x" durch und schaue ob es für dieses Element/VL einen nachfolger gibt
+  -- Hänge jede VL, für die diese Bedingung erfüllt wird, an die Ergebnistabelle "x" an 
+  )
+  
+select distinct  v.Titel, v.VorlNr,
+xrek3.vorgaenger as mussDavorGehörtWerden,
+xrek2.vorgaenger as mussDavorDavorGehörtWerden,
+xrek.vorgaenger as mussDavorDavorDavorGehörtWerden,
+xrek.zaehler as AnzahlVorgänger
+from x as xrek, x as xrek2, x as xrek3, vorlesungen v
+where xrek.nachfolger = v.VorlNr and xrek2.nachfolger = v.VorlNr and xrek3.nachfolger = v.VorlNr
+and xrek.zaehler = 3 and xrek2.zaehler = 2 and xrek3.zaehler = 1
+order by AnzahlVorgänger asc
